@@ -1,0 +1,13 @@
+{
+  "domain": "dae",
+  "name": "DAE",
+  "codeowners": ["@scottg489"],
+  "config_flow": true,
+  "documentation": "https://github.com/ScottG489/ha-dae/issues",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/ScottG489/ha-dae/issues",
+  "loggers": ["dae"],
+  "requirements": [],
+  "version": "0.0.0"
+}
