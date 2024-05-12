@@ -35,6 +35,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_creds(self, user_input: dict[str, Any]) -> FlowResult:
         """Re-prompt for creds if invalid. Otherwise, create entry."""
+        await self.async_set_unique_id(user_input[CONF_USERNAME])
+        self._abort_if_unique_id_configured()
+
         dae_client = DaeClient(username=user_input[CONF_USERNAME], password=user_input[CONF_PASSWORD])
         login_response = await self.hass.async_add_executor_job(dae_client.login)
         if not login_response.result:
