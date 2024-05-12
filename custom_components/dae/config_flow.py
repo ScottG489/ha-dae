@@ -42,8 +42,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         login_response = await self.hass.async_add_executor_job(dae_client.login)
         if not login_response.result:
             return await self._show_error_creds_form()
+
         return self.async_create_entry(
-            title="dae", data={"username": user_input[CONF_USERNAME], "password": user_input[CONF_PASSWORD]}
+            title=user_input[CONF_USERNAME],
+            data={"username": user_input[CONF_USERNAME], "password": user_input[CONF_PASSWORD]}
         )
 
     async def _show_creds_form(self) -> FlowResult:
