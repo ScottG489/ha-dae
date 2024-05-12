@@ -1,0 +1,11 @@
+{
+  "result": true,
+  "message": "",
+  "data": {
+    "name": "Foo Bar",
+    "email": "foo@bar.com",
+    "login-failed-count": "3",
+    "last-login-at": "2024-01-02T01:02:03+00:00",
+    "gateway-amount": 1
+  }
+}

@@ -59,5 +59,5 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="creds",
             data_schema=CREDS_FORM_SCHEMA,
             errors={"base": "invalid_auth"},
-            last_step=False,
+            last_step=True,
         )
