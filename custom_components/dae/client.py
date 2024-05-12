@@ -38,8 +38,7 @@ class DaeClient:
         r = requests.post(self.base_url, data=data)
         self.auth_cookies.load(r.headers['Set-Cookie'])
 
-        rj = r.json()
-        return LoginResponse(rj['result'], rj['message'], rj.get('data'))
+        return LoginResponse.from_response(r.json())
 
     def list_circuits(self) -> ListCircuitsResponse:
         """List circuits."""
@@ -86,6 +85,10 @@ class LoginResponse:
     result: bool
     message: str
     data: dict[str] | None
+
+    @classmethod
+    def from_response(cls, login_resp: dict):
+        return LoginResponse(login_resp['result'], login_resp['message'], login_resp.get('data'))
 
 
 @dataclass
