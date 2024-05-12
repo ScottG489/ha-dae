@@ -20,7 +20,7 @@ class DaeClient:
     def get_channel_meters(self) -> dict:
         """Get channel and meter data."""
         self.login()
-        channels = self.list_circuits()
+        channels = self.list_channels()
         meters = self.read_meters()
 
         channel_meters = {}
@@ -40,25 +40,15 @@ class DaeClient:
 
         return LoginResponse.from_response(r.json())
 
-    def list_circuits(self) -> ListCircuitsResponse:
-        """List circuits."""
+    def list_channels(self) -> ListChannelsResponse:
+        """List channels."""
         action_type = "channel"
         operation_type = "list"
         data = {'d': action_type, 'm': operation_type, 'username': self.username}
 
         r = requests.post(self.base_url, data=data, cookies={'PHPSESSID': self.auth_cookies['PHPSESSID'].value})
-        rj = r.json()
 
-        channels = []
-        for channel in rj.get('data')[0]:
-            channels.append(Channel(channel['channel-id'],
-                                    channel['channel-name'],
-                                    channel['email'],
-                                    channel['device-type'],
-                                    channel['model'],
-                                    channel['project-name'],
-                                    channel['mac-address']))
-        return ListCircuitsResponse(rj['result'], rj['message'], channels)
+        return ListChannelsResponse.from_response(r.json())
 
     def read_meters(self, channel_id: int = None) -> ReadMetersResponse:
         """Read meter data."""
@@ -68,22 +58,18 @@ class DaeClient:
             data['channel-id'] = channel_id
 
         r = requests.post(self.base_url, data=data, cookies={'PHPSESSID': self.auth_cookies['PHPSESSID'].value})
-        rj = r.json()
 
-        meters = []
-        for meter in rj.get('data'):
-            meters.append(Meter(meter['unit'],
-                                meter['value'],
-                                meter['channel-id'],
-                                meter['timestamp'],
-                                meter['disconnected']))
-        return ReadMetersResponse(rj['result'], rj['message'], meters)
+        return ReadMetersResponse.from_response(r.json())
 
 
 @dataclass
-class LoginResponse:
+class DaeResponse:
     result: bool
     message: str
+
+
+@dataclass
+class LoginResponse(DaeResponse):
     data: dict[str] | None
 
     @classmethod
@@ -92,10 +78,21 @@ class LoginResponse:
 
 
 @dataclass
-class ListCircuitsResponse:
-    result: bool
-    message: str
+class ListChannelsResponse(DaeResponse):
     data: list[Channel]
+
+    @classmethod
+    def from_response(cls, list_channels_resp: dict):
+        channels = []
+        for channel in list_channels_resp.get('data')[0]:
+            channels.append(Channel(channel['channel-id'],
+                                    channel['channel-name'],
+                                    channel['email'],
+                                    channel['device-type'],
+                                    channel['model'],
+                                    channel['project-name'],
+                                    channel['mac-address']))
+        return ListChannelsResponse(list_channels_resp['result'], list_channels_resp['message'], channels)
 
 
 @dataclass
@@ -110,10 +107,19 @@ class Channel:
 
 
 @dataclass
-class ReadMetersResponse:
-    result: bool
-    message: str
+class ReadMetersResponse(DaeResponse):
     data: list[Meter]
+
+    @classmethod
+    def from_response(cls, read_meters_resp: dict):
+        meters = []
+        for meter in read_meters_resp.get('data'):
+            meters.append(Meter(meter['unit'],
+                                meter['value'],
+                                meter['channel-id'],
+                                meter['timestamp'],
+                                meter['disconnected']))
+        return ReadMetersResponse(read_meters_resp['result'], read_meters_resp['message'], meters)
 
 
 @dataclass
