@@ -15,11 +15,10 @@ class DaeClient:
         self.password = password
 
         self.base_url = "https://meter.iotems.net/ws/home-owner.php"
-        self.auth_cookies = SimpleCookie()
+        self.auth_cookie = {}
 
     def get_channel_meters(self) -> dict:
         """Get channel and meter data."""
-        self.login()
         channels = self.list_channels()
         meters = self.read_meters()
 
@@ -35,8 +34,11 @@ class DaeClient:
         action_type = "login"
         data = {'d': action_type, 'username': self.username, 'password': self.password}
 
-        r = requests.post(self.base_url, data=data)
-        self.auth_cookies.load(r.headers['Set-Cookie'])
+        self.auth_cookie = {}
+        r = self._request(data)
+        auth_cookie = SimpleCookie()
+        auth_cookie.load(r.headers['Set-Cookie'])
+        self.auth_cookie = {'PHPSESSID': auth_cookie['PHPSESSID'].value}
 
         return LoginResponse.from_response(r.json())
 
@@ -46,7 +48,7 @@ class DaeClient:
         operation_type = "list"
         data = {'d': action_type, 'm': operation_type, 'username': self.username}
 
-        r = requests.post(self.base_url, data=data, cookies={'PHPSESSID': self.auth_cookies['PHPSESSID'].value})
+        r = self._request(data)
 
         return ListChannelsResponse.from_response(r.json())
 
@@ -57,15 +59,38 @@ class DaeClient:
         if channel_id:
             data['channel-id'] = channel_id
 
-        r = requests.post(self.base_url, data=data, cookies={'PHPSESSID': self.auth_cookies['PHPSESSID'].value})
+        r = self._request(data)
 
         return ReadMetersResponse.from_response(r.json())
+
+    def _request(self, data: dict):
+        resp = self._do_request(data)
+        dae_resp = DaeResponse.from_response(resp.json())
+
+        if dae_resp.result:
+            return resp
+        else:
+            self.login()
+            resp = self._do_request(data)
+            dae_resp = DaeResponse.from_response(resp.json())
+
+            if dae_resp.result:
+                return resp
+            else:
+                raise Exception("DAE request failed.")
+
+    def _do_request(self, data: dict):
+        return requests.post(self.base_url, data=data, cookies=self.auth_cookie)
 
 
 @dataclass
 class DaeResponse:
     result: bool
     message: str
+
+    @classmethod
+    def from_response(cls, resp: dict):
+        return DaeResponse(resp['result'], resp['message'])
 
 
 @dataclass
