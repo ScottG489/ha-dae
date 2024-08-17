@@ -109,7 +109,7 @@ class ListChannelsResponse(DaeResponse):
     @classmethod
     def from_response(cls, list_channels_resp: dict):
         channels = []
-        for channel in list_channels_resp.get('data')[0]:
+        for channel in list_channels_resp.get('data'):
             channels.append(Channel(channel['channel-id'],
                                     channel['channel-name'],
                                     channel['email'],
